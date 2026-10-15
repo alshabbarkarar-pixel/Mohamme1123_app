@@ -6,8 +6,9 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: Generate Android Skeleton
+      - name: Clean & Generate Android Skeleton
         script: |
+          rm -rf android
           flutter create . --platforms=android
       - name: Get Flutter packages
         script: |

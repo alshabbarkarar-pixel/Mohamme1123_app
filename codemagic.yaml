@@ -8,7 +8,7 @@ workflows:
     scripts:
       - name: Generate Android Skeleton
         script: |
-          flutter create . --platforms=android --force
+          flutter create . --platforms=android
       - name: Get Flutter packages
         script: |
           flutter pub get

@@ -24,17 +24,143 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Create Clean Flutter Android Project
+      - name: Rebuild Clean Project Structure
         run: |
-          flutter create . --force --project-name=irrigation_app
+          rm -rf * .github
+          flutter create irrigation_app --project-name=irrigation_app
+          mv irrigation_app/* .
+          mv irrigation_app/.* . 2>/dev/null || true
+          rm -rf irrigation_app
 
-      - name: Install Dependencies
-        run: flutter pub get
+      - name: Restore App Main Code
+        run: |
+          cat << 'EOF' > lib/main.dart
+          import 'package:flutter/material.dart';
 
-      - name: Build Release APK
+          void main() {
+            runApp(const IrrigationManagementApp());
+          }
+
+          class IrrigationManagementApp extends StatelessWidget {
+            const IrrigationManagementApp({Key? key}) : super(key: key);
+
+            @override
+            Widget build(BuildContext context) {
+              return MaterialApp(
+                title: 'نظام إدارة مضخات الري',
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  primaryColor: const Color(0xFF1E7D32),
+                  scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+                ),
+                home: const SplashScreen(),
+              );
+            }
+          }
+
+          class SplashScreen extends StatefulWidget {
+            const SplashScreen({Key? key}) : super(key: key);
+
+            @override
+            State<SplashScreen> createState() => _SplashScreenState();
+          }
+
+          class _SplashScreenState extends State<SplashScreen> {
+            @override
+            void initState() {
+              super.initState();
+              Future.delayed(const Duration(seconds: 2), () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+                );
+              });
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                backgroundColor: const Color(0xFF1E7D32),
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.water_drop, size: 80, color: Colors.white),
+                      SizedBox(height: 20),
+                      Text(
+                        'نظام إدارة مضخات الري',
+                        style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+          }
+
+          class MainNavigationScreen extends StatefulWidget {
+            const MainNavigationScreen({Key? key}) : super(key: key);
+
+            @override
+            State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+          }
+
+          class _MainNavigationScreenState extends State<MainNavigationScreen> {
+            int _currentIndex = 0;
+
+            final List<Widget> _screens = [
+              const DashboardScreen(),
+              const Center(child: Text('الرعية')),
+              const Center(child: Text('المصروفات')),
+              const Center(child: Text('التقارير')),
+              const Center(child: Text('الإعدادات')),
+            ];
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                body: _screens[_currentIndex],
+                bottomNavigationBar: BottomNavigationBar(
+                  currentIndex: _currentIndex,
+                  onTap: (index) => setState(() => _currentIndex = index),
+                  type: BottomNavigationBarType.fixed,
+                  selectedItemColor: const Color(0xFF1E7D32),
+                  unselectedItemColor: Colors.grey,
+                  items: const [
+                    BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: 'الرئيسية'),
+                    BottomNavigationBarItem(icon: Icon(Icons.people), label: 'الرعية'),
+                    BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'المصروفات'),
+                    BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'التقارير'),
+                    BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'الإعدادات'),
+                  ],
+                ),
+              );
+            }
+          }
+
+          class DashboardScreen extends StatelessWidget {
+            const DashboardScreen({Key? key}) : super(key: key);
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(
+                  title: const Text('لوحة التحكم'),
+                  backgroundColor: const Color(0xFF1E7D32),
+                  centerTitle: true,
+                ),
+                body: Center(
+                  child: Text('مرحباً بك في نظام إدارة مضخات الري', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+              );
+            }
+          }
+          EOF
+
+      - name: Build APK
         run: flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk

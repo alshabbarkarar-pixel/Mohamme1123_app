@@ -23,15 +23,21 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Create Flutter Project Skeleton
+      - name: Re-create Clean Flutter App
         run: |
-          flutter create . --force --project-name=irrigation_app
+          mkdir temp_app
+          cd temp_app
+          flutter create irrigation_app
+          cp -r irrigation_app/android ../
+          cp -r irrigation_app/ios ../
+          cd ..
+          rm -rf temp_app
 
-      - name: Install dependencies
+      - name: Get Flutter Packages
         run: flutter pub get
 
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v3
